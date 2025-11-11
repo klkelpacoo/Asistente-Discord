@@ -1,3 +1,7 @@
+print("=============================================")
+print("[LOG] INICIANDO SCRIPT main.py (Nivel 0)")
+print("=============================================")
+
 import os
 import discord
 from discord.ext import commands
@@ -5,125 +9,158 @@ import threading
 from flask import Flask
 from waitress import serve 
 
+print("[LOG] Módulos importados correctamente.")
+
 # ====================================================
 # I. DEFINICIÓN GLOBAL
 # ====================================================
 
+print("[LOG] --- SECCIÓN I: DEFINICIÓN GLOBAL ---")
+
+print("[LOG] Creando instancia de Flask...")
 app = Flask(__name__)
+print("[LOG] Instancia de Flask CREADA.")
+
+print("[LOG] Definiendo Intents de Discord...")
 intents = discord.Intents.default()
+print("[LOG] Intents DEFINIDOS.")
+
+print("[LOG] Creando instancia del Bot...")
 bot = commands.Bot(command_prefix='/', intents=intents) 
+print("[LOG] Instancia del Bot CREADA.")
 
 # --- Carga el ID de tu servidor para la sincronización ---
+print("[LOG] Intentando cargar GUILD_ID desde variables de entorno...")
 GUILD_ID_FROM_ENV = os.getenv('GUILD_ID')
 MY_GUILD = None
 
 if GUILD_ID_FROM_ENV:
     try:
         MY_GUILD = discord.Object(id=int(GUILD_ID_FROM_ENV))
-        print(f"✅ [INFO] Sincronizando comandos con GUILD_ID: {GUILD_ID_FROM_ENV}")
+        print(f"✅ [LOG] GUILD_ID cargado y configurado: {GUILD_ID_FROM_ENV}")
     except ValueError:
-        print(f"❌ [ERROR] El GUILD_ID '{GUILD_ID_FROM_ENV}' no es un número.")
+        print(f"❌ [LOG-ERROR] El GUILD_ID '{GUILD_ID_FROM_ENV}' no es un número.")
 else:
-    print("⚠️ [AVISO] No se encontró GUILD_ID. La sincronización será global (lenta).")
+    print("⚠️ [LOG-AVISO] No se encontró GUILD_ID. Se usará sincronización global (lenta).")
 
 # ====================================================
 # II. FUNCIONES DE INFRAESTRUCTURA
 # ====================================================
 
+print("[LOG] --- SECCIÓN II: INFRAESTRUCTURA ---")
+
 @app.route('/')
 def home():
     """Endpoint para UptimeRobot"""
-    return "Bot con Cogs (Guild Sync) está activo!"
+    print("[LOG] Ruta '/' (home) ha recibido un ping.")
+    return "Bot con Cogs (Guild Sync) está activo! (Logs Detallados)"
 
 def run_discord():
     """Ejecuta el bot de Discord en un hilo."""
+    print("[LOG] Función run_discord() iniciada.")
     TOKEN = os.getenv('DISCORD_TOKEN')
     if TOKEN is None:
-        print("\n[ERROR] TOKEN NO ENCONTRADO.")
+        print("\n❌ [LOG-ERROR] TOKEN NO ENCONTRADO. Revisa las variables de entorno.\n")
         return
+    
+    print("🤖 [LOG] TOKEN encontrado. Conectando a Discord...")
     try:
-        print("🤖 [INFO] Conectando a Discord...")
         bot.run(TOKEN) 
     except Exception as e:
-        print(f"❌ Error al conectar Discord: {e}")
+        print(f"❌ [LOG-ERROR] Falló bot.run(TOKEN): {e}")
+
+print("[LOG] Funciones de infraestructura DEFINIDAS.")
 
 # ====================================================
-# III. CARGA DE COGS (¡ESTA ES LA PARTE QUE FALTABA!)
+# III. CARGA DE COGS (LA PARTE MÁS IMPORTANTE)
 # ====================================================
+
+print("[LOG] --- SECCIÓN III: CARGA DE COGS ---")
 
 async def load_extensions():
-    """
-    Carga todos los Cogs (extensiones) desde las carpetas.
-    Esto se ejecuta ANTES de on_ready.
-    """
+    """Carga todos los Cogs (extensiones) desde las carpetas."""
+    print("🤖 [LOG] load_extensions() INICIADA.")
     
-    # Tus carpetas y archivos
     extensions = [
         'moderacion.clear',
         'utilidad.general',
         'juegos.dado' 
     ]
+    print(f"[LOG] Lista de extensiones a cargar: {extensions}")
     
-    print("🤖 [INFO] Iniciando carga de extensiones...")
-    
+    print("[LOG] Iniciando bucle de carga de extensiones...")
     for extension in extensions:
         try:
-            # Intenta cargar el archivo
+            print(f"[LOG] ... Cargando {extension} ...")
             await bot.load_extension(extension)
-            print(f"✅ Cog cargado: {extension}")
+            print(f"✅ [LOG] ÉXITO al cargar: {extension}")
         except Exception as e:
-            # Si falla, imprime el error
-            print(f"❌ [ERROR] Falló al cargar {extension}. Error: {e}")
+            print(f"❌ [LOG-ERROR] FALLÓ al cargar {extension}. Error: {e}")
+    
+    print("🤖 [LOG] load_extensions() COMPLETADA.")
 
-# Asignamos la función al 'setup_hook' para que se ejecute al inicio
-# Esto reemplaza al comando /hola que tenías antes
+# Asignamos la función al 'setup_hook'
+print("[LOG] Asignando load_extensions al bot.setup_hook...")
 bot.setup_hook = load_extensions
+print("[LOG] bot.setup_hook ASIGNADO.")
 
 # ====================================================
 # IV. EVENTO ON_READY
 # ====================================================
 
+print("[LOG] --- SECCIÓN IV: EVENTO ON_READY ---")
+
 @bot.event
 async def on_ready():
     """Se ejecuta cuando el bot está conectado y los Cogs están cargados."""
-    print('-------------------------------------------')
-    print(f'✅ Bot Conectado como: {bot.user.name}')
+    print("\n=============================================")
+    print(f"✅ [LOG] ¡EVENTO on_ready() EJECUTADO! Bot Conectado como: {bot.user.name}")
+    print("=============================================\n")
     
-    # --- SINCRONIZACIÓN CON GUILD ---
-    # Sincroniza todos los comandos que los Cogs han registrado
+    print("[LOG] on_ready: Iniciando bloque try/except de Sincronización.")
     try:
         if MY_GUILD:
-            print(f"🔄 [INFO] Sincronizando comandos para el servidor {MY_GUILD.id}...")
-            # Sincroniza SOLO para tu servidor (instantáneo)
+            print(f"🔄 [LOG] Sincronizando comandos para el servidor (Guild): {MY_GUILD.id}...")
             synced = await bot.tree.sync(guild=MY_GUILD)
         else:
-            print("🔄 [INFO] Sincronizando comandos globalmente (puede tardar)...")
-            # Sincronización global (lenta, hasta 1h)
+            print("🔄 [LOG] Sincronizando comandos globalmente...")
             synced = await bot.tree.sync()
             
-        print(f"✅ Sincronizados {len(synced)} comandos.")
+        # ESTA ES LA LÍNEA MÁS IMPORTANTE
+        print("\n=============================================")
+        print(f"✅ [LOG] ¡Sincronización completada! Comandos sincronizados: {len(synced)}")
+        print("=============================================\n")
             
     except Exception as e:
-        print(f"❌ Error al sincronizar comandos: {e}")
+        print(f"❌ [LOG-ERROR] Error fatal durante la sincronización: {e}")
     
-    print('Render deployment successful.')
-    print('-------------------------------------------')
+    print("[LOG] Render deployment successful (mensaje de on_ready).")
+    print("-------------------------------------------\n")
 
+print("[LOG] Evento on_ready DEFINIDO.")
 
 # ====================================================
 # V. EJECUCIÓN DEL SERVICIO
 # ====================================================
 
+print("[LOG] --- SECCIÓN V: EJECUCIÓN ---")
+
 def start_bot_and_server():
     """Inicia el bot y el servidor web."""
+    print("[LOG] start_bot_and_server() INICIADA.")
     
-    print("🚀 Iniciando hilo del Bot de Discord...")
+    print("🚀 [LOG] Creando hilo del Bot de Discord...")
     discord_thread = threading.Thread(target=run_discord)
+    print("🚀 [LOG] Iniciando hilo del Bot de Discord (thread.start())...")
     discord_thread.start()
     
     port = int(os.environ.get('PORT', 10000)) 
-    print(f"✅ Abriendo servidor Waitress en puerto {port}...")
+    print(f"✅ [LOG] Abriendo servidor Waitress en puerto {port} (esto bloqueará el hilo principal)...")
     serve(app, host='0.0.0.0', port=port)
 
+# Punto de entrada
 if __name__ == '__main__':
+    print("[LOG] __name__ == '__main__' (Punto de entrada) detectado.")
     start_bot_and_server()
+else:
+    print("[LOG] __name__ != '__main__' (Script importado?).")
