@@ -48,18 +48,19 @@ async def load_extensions():
     extensions = [
         'moderacion.clear',
         'utilidad.general',
-        'juegos.dado' # ¡Aquí se carga tu nuevo módulo!
+        'juegos.dado' # <--- ESTE DEBE ESTAR CARGADO
     ]
+    
+    print("🤖 [INFO] Iniciando carga de extensiones...")
     
     for extension in extensions:
         try:
             await bot.load_extension(extension)
-            print(f"🤖 [INFO] Cog cargado: {extension}")
+            print(f"✅ Cog cargado: {extension}")
         except Exception as e:
-            # Si un Cog falla al cargar, lo reportamos y no detenemos el bot.
+            # Si un Cog falla al cargar, lo reportamos.
             print(f"❌ [ERROR] Falló al cargar {extension}: {e}")
-
-bot.setup_hook = load_extensions # Esto le dice al bot que ejecute load_extensions antes de conectarse
+            print(f"   Asegúrate de que la carpeta '{extension.split('.')[0]}' existe y que el archivo '{extension.split('.')[1]}.py' está en ella.")
 
 @bot.event
 async def on_ready():
