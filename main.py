@@ -19,7 +19,7 @@ def home():
 
 def run_server():
     """Inicia Flask en un hilo de fondo."""
-    # Render usa la variable de entorno PORT, la cogemos si existe, si no, usamos 8080
+    # Render usa la variable de entorno PORTeee, la cogemos si existe, si no, usamos 8080
     port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port)
 
