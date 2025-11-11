@@ -48,6 +48,8 @@ async def load_extensions():
         # El path es 'nombre_carpeta.nombre_archivo_sin_py'
         await bot.load_extension('moderacion.clear')
         print("🤖 [INFO] Cog cargado: moderacion.clear")
+        await bot.load_extension('utilidad.general')
+        print("🤖 [INFO] Cog cargado: utilidad.general")
     except Exception as e:
         print(f"❌ [ERROR] Error al cargar cog: moderacion.clear: {e}")
 
