@@ -9,7 +9,7 @@ from flask import Flask
 # A) CONFIGURACIÓN DEL SERVIDOR WEB (KEEP-ALIVE)
 # ----------------------------------------------------
 
-# Flask es el servidor web simple que Render necesita para mantenerse "vivo".
+# Flask es el servidor web simple que Render necesita para mantenerse "vivo".lll
 app = Flask(__name__)
 
 @app.route('/')
@@ -19,7 +19,7 @@ def home():
 
 def run_server():
     """Inicia Flask en un hilo de fondo."""
-    # Render usa la variable de entorno PORT, la cogemos si existe, si no, usamos 8080
+    # Render usa la variable de entorno PORTEEEEEE, la cogemos si existe, si no, usamos 8080
     port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port)
 
@@ -29,8 +29,19 @@ def run_server():
 # ----------------------------------------------------
 intents = discord.Intents.default()
 intents.message_content = True 
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = commands.Bot(command_prefix='/', intents=intents)
 
+# AÑADE ESTO AQUÍ ⬇️
+async def load_extensions():
+    # El path es 'nombre_carpeta.nombre_archivo_sin_py'
+    try:
+        await bot.load_extension('moderacion.clear')
+        print("🤖 [INFO] Cog cargado: moderacion.clear")
+    except Exception as e:
+        print(f"❌ [ERROR] Error al cargar cog: moderacion.clear: {e}")
+
+bot.setup_hook = load_extensions # Esto le dice al bot que ejecute load_extensions antes de conectarse
+# HASTA AQUÍ ⬆️
 
 @bot.event
 async def on_ready():
