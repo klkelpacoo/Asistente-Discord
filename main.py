@@ -1,53 +1,62 @@
 import os
 import discord
 from discord.ext import commands
-# IMPORTANTE: Eliminamos threading
+import threading 
 from flask import Flask
 from waitress import serve 
 
-# ... (Sección A, B - El resto del código de Flask y Discord es el mismo) ...
+# ====================================================
+# I. DEFINICIÓN GLOBAL (ANTES DE LAS FUNCIONES)
+# ====================================================
+
+# A) CONFIGURACIÓN DEL SERVIDOR WEB (KEEP-ALIVE)
+app = Flask(__name__)
+
+# B) CONFIGURACIÓN DEL BOT DE DISCORD
+intents = discord.Intents.default()
+intents.message_content = True 
+bot = commands.Bot(command_prefix='/', intents=intents)
+
+# ====================================================
+# II. FUNCIONES Y RUTAS (DEFINIDAS DESPUÉS DE LAS GLOBALES)
+# ====================================================
+
+@app.route('/')
+def home():
+    """Endpoint al que pingueará UptimeRobot."""
+    return "Discord Bot is running 24/7!"
+
+def run_discord():
+    """Conecta el bot de Discord en un hilo separado."""
+    TOKEN = os.getenv('DISCORD_TOKEN')
+    try:
+        # Aquí 'bot' ya está definido
+        bot.run(TOKEN) 
+    except Exception as e:
+        print(f"❌ Error al conectar Discord: {e}")
+
+# ... (El resto de funciones como load_extensions, on_ready, etc. pueden ir aquí) ...
+
+@bot.command(name='hola')
+async def saludo(ctx):
+    await ctx.send(f'¡Hola, {ctx.author.display_name}! Estoy en línea 24/7.')
 
 # ----------------------------------------------------
-# C) EJECUCIÓN ESTABLE CON WAITRESS (SIN THREADING)
+# C) EJECUCIÓN: Función Principal
 # ----------------------------------------------------
 
 def start_bot_and_server():
-    # 1. Obtenemos el token
-    TOKEN = os.getenv('DISCORD_TOKEN')
-
-    if TOKEN is None:
-        print("\n[ERROR] TOKEN NO ENCONTRADO. Configúralo en las Environment Variables de Render.")
-        return
-
-    # 2. Definimos el puerto que Render nos da (o el 8080 por defecto)
-    port = int(os.environ.get('PORT', 8080))
-
-    # 3. La lógica clave: ejecutamos el bot de Discord en el fondo
-    #    y luego iniciamos Waitress para que Render detecte el puerto.
-
-    # Usaremos una solución simple: conectamos el bot en un hilo, 
-    # y luego dejamos que Waitress bloquee el hilo principal (que es lo que Render espera).
+    # El chequeo del TOKEN puede ir aquí, pero lo simplificamos en run_discord
     
-    # Crear un hilo para el bot.run()
-    # Aunque eliminamos la importación de threading arriba, lo necesitamos aquí para que bot.run()
-    # no bloquee la ejecución de Waitress. (Es una de las pocas veces que el threading es necesario en Render.)
-    
-    import threading 
-    
-    def run_discord():
-        try:
-            bot.run(TOKEN)
-        except Exception as e:
-            print(f"❌ Error al conectar Discord: {e}")
-            
     # Iniciamos el bot en un hilo
     discord_thread = threading.Thread(target=run_discord)
     discord_thread.start()
     
     # Abrimos Waitress en el hilo principal
+    port = int(os.environ.get('PORT', 10000)) # Usamos 10000 por defecto para ser explícitos
     print(f"✅ Abriendo servidor Waitress en puerto {port} para Keep-Alive...")
+    # Aquí 'app' ya está definido
     serve(app, host='0.0.0.0', port=port)
 
 if __name__ == '__main__':
-    # Esta función ahora maneja el inicio de ambos
     start_bot_and_server()
