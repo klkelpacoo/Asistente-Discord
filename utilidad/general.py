@@ -2,6 +2,16 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import time
+import os # Importar os
+
+# --- Cargar el Guild ID desde las variables de entorno ---
+GUILD_ID_FROM_ENV = os.getenv('GUILD_ID')
+MY_GUILD = None
+if GUILD_ID_FROM_ENV:
+    try:
+        MY_GUILD = discord.Object(id=int(GUILD_ID_FROM_ENV))
+    except ValueError:
+        MY_GUILD = None # Falla si el ID no es un número
 
 class General(commands.Cog):
     """Contiene comandos de utilidad general como ping e info."""
@@ -10,12 +20,12 @@ class General(commands.Cog):
         self.bot = bot
         self.start_time = time.time()
         
-    @app_commands.command(name="ping", description="Muestra la latencia del bot en milisegundos.")
+    @app_commands.command(name="ping", description="Muestra la latencia del bot en milisegundos.", guild=MY_GUILD)
     async def ping_slash(self, interaction: discord.Interaction):
         latency_ms = round(self.bot.latency * 1000)
         await interaction.response.send_message(f'🏓 ¡Pong! Latencia: **{latency_ms} ms**', ephemeral=True)
 
-    @app_commands.command(name="info", description="Muestra el tiempo activo (Uptime) y la versión del bot.")
+    @app_commands.command(name="info", description="Muestra el tiempo activo (Uptime) y la versión del bot.", guild=MY_GUILD)
     async def info_slash(self, interaction: discord.Interaction):
         current_time = time.time()
         uptime_seconds = int(round(current_time - self.start_time))
