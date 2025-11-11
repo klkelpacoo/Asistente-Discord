@@ -1,50 +1,65 @@
 import os
 import discord
 from discord.ext import commands
+# Importamos threading para ejecutar Flask en un hilo separado
+import threading
+from flask import Flask
 
 # ----------------------------------------------------
-# 1. Configuración del Bot y Prefijo
+# A) CONFIGURACIÓN DEL SERVIDOR WEB (KEEP-ALIVE)
 # ----------------------------------------------------
-# Los 'intents' son necesarios para decirle a Discord qué datos necesita el bot.
+
+# Flask es el servidor web simple que Render necesita para mantenerse "vivo".
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    """Endpoint al que pingueará el servicio externo."""
+    return "Discord Bot is running and kept alive!"
+
+def run_server():
+    """Inicia Flask en un hilo de fondo."""
+    # Render usa la variable de entorno PORT, la cogemos si existe, si no, usamos 8080
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=port)
+
+
+# ----------------------------------------------------
+# B) CONFIGURACIÓN DEL BOT DE DISCORD
+# ----------------------------------------------------
 intents = discord.Intents.default()
 intents.message_content = True 
-
-# Definimos el prefijo para los comandos (ej: !hola)
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 
-# ----------------------------------------------------
-# 2. Evento de Inicio (Se ejecuta al conectar)
-# ----------------------------------------------------
 @bot.event
 async def on_ready():
-    """Confirma que el bot ha iniciado sesión y está listo."""
     print('-------------------------------------------')
     print(f'✅ Bot Conectado como: {bot.user.name}')
     print('Render deployment successful.')
     print('-------------------------------------------')
 
 
-# ----------------------------------------------------
-# 3. Primer Comando: ¡Hola!
-# ----------------------------------------------------
 @bot.command(name='hola')
 async def saludo(ctx):
-    """Responde con un saludo al usar !hola"""
-    await ctx.send(f'¡Hola, {ctx.author.display_name}! Estoy en línea y funcionando en Render.')
+    await ctx.send(f'¡Hola, {ctx.author.display_name}! Estoy en línea y funcionando 24/7.')
 
 
 # ----------------------------------------------------
-# 4. Ejecución Segura (Obteniendo el Token de Render)
+# C) EJECUCIÓN DEL BOT
 # ----------------------------------------------------
-# Render ya expone las variables de entorno sin necesidad de librerías extra.
+
+# 1. Iniciamos el Servidor Web en un hilo paralelo
+server_thread = threading.Thread(target=run_server)
+server_thread.start()
+
+# 2. Iniciamos el Bot de Discord
 TOKEN = os.getenv('DISCORD_TOKEN')
 
 if TOKEN is None:
     print("\n[ERROR] El TOKEN no fue encontrado. Configúralo en las Environment Variables de Render.")
 else:
     try:
-        # Iniciamos la conexión con Discord
         bot.run(TOKEN)
     except discord.LoginFailure:
         print("\n[ERROR] El token de acceso proporcionado es inválido. Revisa tu Token en Render.")
