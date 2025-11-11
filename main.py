@@ -6,21 +6,15 @@ from flask import Flask
 from waitress import serve 
 
 # ====================================================
-# I. DEFINICIÓN GLOBAL (ANTES DE LAS FUNCIONES)
+# I. DEFINICIÓN GLOBAL
 # ====================================================
-
-# A) CONFIGURACIÓN DEL SERVIDOR WEB (KEEP-ALIVE)
 app = Flask(__name__)
-
-# B) CONFIGURACIÓN DEL BOT DE DISCORD
 intents = discord.Intents.default()
-# IMPORTANTE: Necesario para leer contenido de mensajes
 intents.message_content = True 
-# Definimos el prefijo de mensaje como '/'
 bot = commands.Bot(command_prefix='/', intents=intents) 
 
 # ====================================================
-# II. FUNCIONES Y RUTAS
+# II. FUNCIONES DE INFRAESTRUCTURA
 # ====================================================
 
 @app.route('/')
@@ -36,19 +30,16 @@ def run_discord():
         return
         
     try:
-        # Aquí 'bot' ya está definido
         bot.run(TOKEN) 
     except Exception as e:
         print(f"❌ Error al conectar Discord: {e}")
 
-
 async def load_extensions():
     """Función para cargar los Cogs (Módulos) del bot."""
-    # Lista de extensiones a cargar: carpeta.archivo
     extensions = [
         'moderacion.clear',
         'utilidad.general',
-        'juegos.dado' # <--- ESTE DEBE ESTAR CARGADO
+        'juegos.dado' 
     ]
     
     print("🤖 [INFO] Iniciando carga de extensiones...")
@@ -58,9 +49,9 @@ async def load_extensions():
             await bot.load_extension(extension)
             print(f"✅ Cog cargado: {extension}")
         except Exception as e:
-            # Si un Cog falla al cargar, lo reportamos.
-            print(f"❌ [ERROR] Falló al cargar {extension}: {e}")
-            print(f"   Asegúrate de que la carpeta '{extension.split('.')[0]}' existe y que el archivo '{extension.split('.')[1]}.py' está en ella.")
+            print(f"❌ [ERROR] Falló al cargar {extension}. Error: {e}")
+
+bot.setup_hook = load_extensions
 
 @bot.event
 async def on_ready():
@@ -79,7 +70,7 @@ async def on_ready():
 
 
 # ----------------------------------------------------
-# III. EJECUCIÓN ESTABLE CON WAITRESS
+# III. EJECUCIÓN DEL SERVICIO
 # ----------------------------------------------------
 
 def start_bot_and_server():
@@ -90,7 +81,7 @@ def start_bot_and_server():
     discord_thread.start()
     
     # Abrimos Waitress en el hilo principal (que Render espera)
-    port = int(os.environ.get('PORT', 10000)) # Usamos 10000 como puerto de Render
+    port = int(os.environ.get('PORT', 10000)) 
     print(f"✅ Abriendo servidor Waitress en puerto {port} para Keep-Alive...")
     serve(app, host='0.0.0.0', port=port)
 
