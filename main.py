@@ -9,7 +9,7 @@ from flask import Flask
 # A) CONFIGURACIÓN DEL SERVIDOR WEB (KEEP-ALIVE)
 # ----------------------------------------------------
 
-# Flask es el servidor web simple que Render necesita para mantenerse "vivo".
+# Flask es el servidor web simple que Render necesita para mantenerse "vivo".lll
 app = Flask(__name__)
 
 @app.route('/')
