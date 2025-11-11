@@ -160,7 +160,7 @@ def start_bot_and_server():
 
 # Punto de entrada
 if __name__ == '__main__':
-    print("[LOG] __name__ == '__main__' (Punto de entrada) detectado.")
+    print("[LOG] __name__ == '__main__' (Punto de entrada) detectaado.")
     start_bot_and_server()
 else:
     print("[LOG] __name__ != '__main__' (Script importado?).")
