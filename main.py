@@ -29,8 +29,19 @@ def run_server():
 # ----------------------------------------------------
 intents = discord.Intents.default()
 intents.message_content = True 
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = commands.Bot(command_prefix='/', intents=intents)
 
+# AÑADE ESTO AQUÍ ⬇️
+async def load_extensions():
+    # El path es 'nombre_carpeta.nombre_archivo_sin_py'
+    try:
+        await bot.load_extension('moderacion.clear')
+        print("🤖 [INFO] Cog cargado: moderacion.clear")
+    except Exception as e:
+        print(f"❌ [ERROR] Error al cargar cog: moderacion.clear: {e}")
+
+bot.setup_hook = load_extensions # Esto le dice al bot que ejecute load_extensions antes de conectarse
+# HASTA AQUÍ ⬆️
 
 @bot.event
 async def on_ready():
