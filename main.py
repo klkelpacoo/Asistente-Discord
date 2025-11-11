@@ -14,9 +14,9 @@ app = Flask(__name__)
 
 # B) CONFIGURACIÓN DEL BOT DE DISCORD
 intents = discord.Intents.default()
-# Este intent es crucial para poder procesar comandos de texto (aunque usemos Slash Commands, es buena práctica)
+# IMPORTANTE: Necesario para leer contenido de mensajes
 intents.message_content = True 
-# Definimos el prefijo de mensaje como '/' (aunque ahora solo usaremos Slash Commands)
+# Definimos el prefijo de mensaje como '/'
 bot = commands.Bot(command_prefix='/', intents=intents) 
 
 # ====================================================
@@ -44,14 +44,20 @@ def run_discord():
 
 async def load_extensions():
     """Función para cargar los Cogs (Módulos) del bot."""
-    try:
-        # El path es 'nombre_carpeta.nombre_archivo_sin_py'
-        await bot.load_extension('moderacion.clear')
-        print("🤖 [INFO] Cog cargado: moderacion.clear")
-        await bot.load_extension('utilidad.general')
-        print("🤖 [INFO] Cog cargado: utilidad.general")
-    except Exception as e:
-        print(f"❌ [ERROR] Error al cargar cog: moderacion.clear: {e}")
+    # Lista de extensiones a cargar: carpeta.archivo
+    extensions = [
+        'moderacion.clear',
+        'utilidad.general',
+        'juegos.dado' # ¡Aquí se carga tu nuevo módulo!
+    ]
+    
+    for extension in extensions:
+        try:
+            await bot.load_extension(extension)
+            print(f"🤖 [INFO] Cog cargado: {extension}")
+        except Exception as e:
+            # Si un Cog falla al cargar, lo reportamos y no detenemos el bot.
+            print(f"❌ [ERROR] Falló al cargar {extension}: {e}")
 
 bot.setup_hook = load_extensions # Esto le dice al bot que ejecute load_extensions antes de conectarse
 
@@ -60,19 +66,15 @@ async def on_ready():
     print('-------------------------------------------')
     print(f'✅ Bot Conectado como: {bot.user.name}')
     
-    # ⬇️ SINCRONIZACIÓN DE SLASH COMMANDS ⬇️
+    # SINCRONIZACIÓN DE SLASH COMMANDS
     try:
-        # Sincroniza los comandos con Discord
         synced = await bot.tree.sync()
         print(f"✅ Sincronizados {len(synced)} Slash Commands.")
     except Exception as e:
         print(f"❌ Error al sincronizar comandos: {e}")
-    # ------------------------------------
     
     print('Render deployment successful.')
     print('-------------------------------------------')
-
-# *** COMANDO /HOLA ELIMINADO DE AQUÍ ***
 
 
 # ----------------------------------------------------
