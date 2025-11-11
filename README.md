@@ -5,4 +5,4 @@ Discord BOT Solution (py)
 /clear [cantidad]
 /ping "ping del bot"
 /info "info del bot"
-/dados "juego de tirar dados"
+/dados "juego de tirar dados"LLL
